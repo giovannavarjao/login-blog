@@ -127,11 +127,11 @@ app.post('/cadastrar_posts', (req, res) => {
 // Rota para a página cadastro do post
 app.get('/cadastrar_posts', (req, res) => {
     // Quando for renderizar páginas pelo EJS, passe parametros para ele em forma de JSON
-    if (req. session. loggedin){
-         res.render('pages/cadastrar_posts', { req: req });
-    }   else{
-        req.redirect("Usuário precisa estar logado!")
-        res.redirect('pages/login_falied')
+    if (req.session.loggedin) {
+        res.render('pages/cadastrar_posts', { req: req });
+    } else {
+        // req.redirect("Usuário precisa estar logado!")
+        res.redirect('/login_failed');
     }
 });
 
