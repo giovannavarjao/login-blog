@@ -7,7 +7,7 @@
 
 <body class="container">
 
-    <header>
+    <header class="container">
         <%- include('../partials/header'); %>
         <% if(req.session.loggedin) { %>
         <%- include('../partials/menu_dashboard'); %>
@@ -35,5 +35,5 @@
     <footer>
         <%- include('../partials/footer'); %>
     </footer>
-
+    <%- include('..partials/posts'S) %>
 </body>

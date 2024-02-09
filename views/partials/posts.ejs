@@ -1,0 +1,49 @@
+<div class="container mt-5">
+  <div class="row">
+      <% posts.forEach(post => { %>
+          <div class="col-md-12 mb-4">
+              <div class="card">
+                  <div class="card-body">
+                    <p><strong>Quantidade de Posts:</strong> <%= totalPosts %></p>
+                      <h2 class="card-title"><%= post.titulo %></h2>
+                      <h5 class="card-text"><%- post.autor %></h5>
+                      <h5 class="card-text"><%- (new Date(post.datapostagem)).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) %></h5>
+                      <p class="card-text"><%- post.conteudo %></p>
+                  </div>
+                </div>
+            </div>
+      <% }); %>
+  </div>
+</div>
+
+
+
+<style>
+  h1{
+    margin-left: 350px;
+  }
+  
+  .card:hover{
+    transform: scale(1.0);
+    transition: all 0.2s;
+    box-shadow: 5px 2px #00000080;
+    
+  }
+
+    p{
+      color: #68592a;
+    }
+
+    h3{
+      color: #ffc107;
+    }
+
+    h5{
+      color: #856a18;
+    }
+
+    h2{
+      color: #ffc107;
+    
+    }
+</style>

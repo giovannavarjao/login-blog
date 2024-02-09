@@ -8,7 +8,7 @@ const app = express();
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'phpmyadmin',
-    password: 'giovanna',
+    password: 'contasenai',
     database: 'mydb',
 });
 
@@ -46,7 +46,7 @@ app.set('view engine', 'ejs');
 app.get('/', (req, res) => {
     // Passe a variável 'req' para o template e use-a nas páginas para renderizar partes do HTML conforme determinada condição
     // Por exemplo de o usuário estive logado, veja este exemplo no arquivo views/partials/header.ejs
-    res.render('pages/index', { req: req });
+    res.redirect('/posts');
     // Caso haja necessidade coloque pontos de verificação para verificar pontos da sua logica de negócios
     console.log(`${req.session.username ? `Usuário ${req.session.username} logado no IP ${req.connection.remoteAddress}` : 'Usuário não logado.'}  `);
     //console.log(req.connection)
@@ -60,8 +60,26 @@ app.get('/login', (req, res) => {
 });
 
 
+
 app.get('/about', (req, res) => {
     res.render('pages/about', { req: req })
+});
+
+
+app.get('/posts', (req, res) => {
+    // const dados = [
+    //     { titulo: "Post 1", conteudo: "Conteúdo 1"},
+    //     { titulo: "Post 2", conteudo: "Conteúdo 2"},
+    //     { titulo: "Post 3", conteudo: "Conteúdo 3"}
+    // ]
+
+    const query = 'SELECT * FROM posts;'
+    db.query(query, [], (err, results) => {
+        if (err) throw err;
+            // res.send('Credenciais incorretas. <a href="/">Tente novamente</a>');
+
+    res.render('pages/pgposts', { req: req, posts: results, totalPosts: results.length})
+});
 });
 
 // Rota para processar o formulário de login
@@ -86,17 +104,16 @@ app.post('/login', (req, res) => {
 
 // Rota para processar o formulário de caastro depostagem
 app.post('/cadastrar_posts', (req, res) => {
-    const { titulo, conteudo } = req.body;
-    const autor = "admin";
+    const { titulo, conteudo  } = req.body;
+    const autor = req.session.username;
     const datapostagem = new Date();
-
     // const query = 'SELECT * FROM users WHERE username = ? AND password = SHA1(?)';
-    const query = 'INSERT INTO posts (titulo, conteudo, autor, datapostagem) VALUES (?,?,?,?)';
+    const query = 'INSERT INTO posts (titulo, conteudo, autor, datapostagem) VALUES (?, ?, ?, NOW())';
 
     db.query(query, [titulo, conteudo, autor, datapostagem], (err, results) => {
         if (err) throw err;
-        console.log(`Rotina cadastrar posts: ${JSON.stringfy(results)}`);
-        if (results.length > 0) {
+        console.log(`Rotina cadastrar posts: ${JSON.stringify(results)}`);
+        if (results.affectedRows > 0) {
             console.log('Cadastro de postagem OK')
             res.redirect('/dashboard');
         } else {
@@ -105,6 +122,52 @@ app.post('/cadastrar_posts', (req, res) => {
         }
     });
 });
+
+
+// // Rota para excluir um post
+// app.delete('/excluir_post/:postId', (req, res) => {
+//     const postId = req.params.postId;
+
+//     const query = 'DELETE FROM posts WHERE id = ?';
+
+//     db.query(query, [postId], (err, results) => {
+//         if (err) {
+//             console.error('Erro ao excluir o post:', err);
+//             res.json({ success: false });
+//         } else {
+//             res.json({ success: true });
+//         }
+//     });
+// });
+
+app.post('/deletePost', (req, res) => {
+    const postId = req.body.postId;
+  
+    // Implemente a lógica para excluir o post do banco de dados usando o postId
+    const sql = 'DELETE FROM posts WHERE id = ?';
+    db.query(sql, [postId], (err, result) => {
+      if (err) throw err;
+      console.log('Post excluído com sucesso.');
+  
+      // Redireciona para a página que exibe a lista atualizada de posts
+      res.redirect('/lista_posts');
+    });
+  });
+
+  // Rota para excluir todos os posts
+app.post('/deleteAllPosts', (req, res) => {
+    // Implemente a lógica para excluir todos os posts do banco de dados
+    const sql = 'DELETE FROM posts';
+    db.query(sql, (err, result) => {
+      if (err) throw err;
+      console.log('Todos os posts excluídos com sucesso.');
+  
+      // Redireciona para a página que exibe a lista atualizada de posts
+      res.redirect('/');
+    });
+  });
+  
+
 
 // const query = 'INSERT INTO users (username, password) VALUES (?, SHA1(?))';
 // console.log(`POST /CADASTAR -> query -> ${query}`);
@@ -130,10 +193,37 @@ app.get('/cadastrar_posts', (req, res) => {
     if (req.session.loggedin) {
         res.render('pages/cadastrar_posts', { req: req });
     } else {
-        // req.redirect("Usuário precisa estar logado!")
-        res.redirect('/login_failed');
+        res.redirect('/post_failed');
     }
 });
+
+app.get('/lista_posts', (req, res) => {
+    const query = 'SELECT * FROM posts;';
+    if (req.session.loggedin) {
+        db.query(query, (err, results) => {
+            if (err) throw err;
+
+            // Verifica se há algum post
+            const hasPosts = results.length > 0;
+
+            res.render('pages/lista_posts', { req: req, posts: results, hasPosts: hasPosts, totalPosts: results.length });
+        });
+    } else {
+        res.redirect('/page_failed');
+    }
+});
+
+
+
+// app.get('/lista_posts', (req, res) => {
+//     // Passe a variável 'req' para o template e use-a nas páginas para renderizar partes do HTML conforme determinada condição
+//     // Por exemplo de o usuário estive logado, veja este exemplo no arquivo views/partials/header.ejs
+//     res.redirect('/lista');
+//     // Caso haja necessidade coloque pontos de verificação para verificar pontos da sua logica de negócios
+   
+//     //console.log(req.connection)
+//     ;
+// });
 
 // Rotas para cadastrar
 app.get('/cadastrar', (req, res) => {
@@ -189,6 +279,17 @@ app.get('/register_ok', (req, res) => {
 app.get('/login_failed', (req, res) => {
     res.render('pages/login_failed', { req: req });
 });
+
+app.get('/post_failed', (req, res) => {
+    res.render('pages/post_failed', { req: req });
+});
+
+app.get('/page_failed', (req, res) => {
+    res.render('pages/page_failed', { req: req });
+});
+
+
+
 
 // Rota para a página do painel
 app.get('/dashboard', (req, res) => {
