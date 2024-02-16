@@ -8,7 +8,7 @@ const app = express();
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'phpmyadmin',
-    password: 'contasenai',
+    password: 'giovanna',
     database: 'mydb',
 });
 
@@ -209,7 +209,7 @@ app.get('/lista_posts', (req, res) => {
             res.render('pages/lista_posts', { req: req, posts: results, hasPosts: hasPosts, totalPosts: results.length });
         });
     } else {
-        res.redirect('/page_failed');
+        res.redirect('/login_failed');
     }
 });
 
@@ -232,6 +232,88 @@ app.get('/cadastrar', (req, res) => {
     } else {
         res.redirect('pages/dashboard', { req: req });
     }
+});
+
+app.post('/editar_post/:id', (req, res) => {
+    const { conteudo } = req.body;
+    const id = req.params.id;
+    console.log(`/editar_post -> req.body: ${JSON.stringify(req.body)}`)
+    // UPDATE `posts` SET `conteudo`='[value-3]' WHERE id=23
+    // const sql = `
+    //   UPDATE posts
+    //   SET conteudo = ?
+    //   WHERE id = ?;
+    // `;
+    const sql = "UPDATE posts SET conteudo=? WHERE id=?;"
+    console.log(`${sql}`);
+    db.query(sql, [conteudo, id], (error, results, fields) => {
+        if (error) {
+            console.log('Erro ao editar o conteúdo do post:', error);
+            res.status(500).send('Erro ao editar o conteúdo do post');
+        } else {
+            console.log('Conteúdo do post editado com sucesso');
+            res.redirect('/'); // Redireciona o usuário de volta para a página inicial após editar o post
+        }
+    });
+});
+
+
+app.get('/editarpost', (req, res) => {
+    // Recupera o ID do post da URL
+    const query = 'SELECT * FROM posts WHERE id = "?";'
+    db.query(query, (err, results) => {
+        if (err) throw err;
+        console.log(`GET /editarpost -> ${JSON.stringify(results)}`)
+
+        // Renderiza a página de edição, passando o ID do post para o formulário
+        res.render('pages/editarpost', { req: req, post: results });
+    })
+});
+
+app.post('/editarpost', (req, res) => {
+    const {postId} = req.body;
+    console.log(`/editarpost -> req.body: ${JSON.stringify(req.body)}`)
+
+    // Consulta o banco de dados para obter os detalhes do post com o ID fornecido
+    const query = 'SELECT * FROM posts WHERE id = ?';
+    db.query(query, [postId], (err, results) => {
+        if (err) {
+            console.error('Erro ao recuperar detalhes do post:', err);
+            res.status(500).send('Erro ao recuperar detalhes do post');
+            return;
+        }
+
+        // Renderiza a página de edição, passando o ID do post e os detalhes do post para o formulário
+        res.render('pages/editarpost', { req: req, postId: postId, post: results[0] });
+    });
+});
+
+
+app.post('/deletePost', (req, res) => {
+    const postId = req.body.postId;
+
+    // Implemente a lógica para excluir o post do banco de dados usando o postId
+    const sql = 'DELETE FROM posts WHERE id = ?';
+    db.query(sql, [postId], (err, result) => {
+        if (err) throw err;
+        console.log('Post excluído com sucesso.');
+
+        // Redireciona para a página que exibe a lista atualizada de posts
+        res.redirect('/lista_posts');
+    });
+});
+
+// Rota para excluir todos os posts
+app.post('/deleteAllPosts', (req, res) => {
+    // Implemente a lógica para excluir todos os posts do banco de dados
+    const sql = 'DELETE FROM posts';
+    db.query(sql, (err, result) => {
+        if (err) throw err;
+        console.log('Todos os posts excluídos com sucesso.');
+
+        // Redireciona para a página que exibe a lista atualizada de posts
+        res.redirect('/');
+    });
 });
 
 // Rota para efetuar o cadastro de usuário no banco de dados
